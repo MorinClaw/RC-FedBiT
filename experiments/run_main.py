@@ -39,7 +39,7 @@ def parse_args():
     return p.parse_args()
 
 def make_model(device, num_classes=10):
-    m = timm.create_model("vit_tiny_patch16_224", pretrained=False, num_classes=num_classes)
+    m = timm.create_model("vit_tiny_patch16_224", img_size=32, patch_size=4, pretrained=False, num_classes=num_classes)
     return m.to(device)
 
 def eval_model(model, loader, device):
@@ -252,7 +252,7 @@ def main():
     print(f"Device: {DEVICE}, Method: {args.method}, Alpha: {args.alpha}, Rounds: {args.rounds}", flush=True)
 
     transform = transforms.Compose([
-        transforms.Resize((224, 224)), transforms.ToTensor(),
+        transforms.ToTensor(),
         transforms.Normalize([0.5]*3, [0.5]*3)
     ])
     train_ds = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=True, download=False, transform=transform)
@@ -273,8 +273,8 @@ def main():
     ]
 
     print("Creating global model...", flush=True)
-global_model = make_model(DEVICE)
-print("Global model ready.", flush=True)
+    global_model = make_model(DEVICE)
+    print("Global model ready.", flush=True)
 
     runners = {
         "fedavg": run_fedavg,
