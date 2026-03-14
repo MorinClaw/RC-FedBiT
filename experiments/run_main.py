@@ -7,7 +7,9 @@ Usage: python run_main.py --method <fedavg|signsgd|qsgd|powersgd|rc_fedbit> [--a
 import sys, os, argparse, json, time
 sys.path.insert(0, "/root/RC-FedBiT")
 
-import torch, timm
+import torch
+torch.multiprocessing.set_sharing_strategy("file_system")
+import timm
 import numpy as np
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
@@ -254,7 +256,7 @@ def main():
     ])
     train_ds = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=True, download=False, transform=transform)
     test_ds  = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=False, download=False, transform=transform)
-    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=0)
 
     if args.alpha >= 100:
         client_datasets = iid_partition(train_ds, args.n_clients, seed=args.seed)
@@ -265,7 +267,7 @@ def main():
 
     # Create loaders lazily to avoid 200+ worker processes
     client_loaders = [
-        DataLoader(ds, batch_size=64, shuffle=True, num_workers=2)
+        DataLoader(ds, batch_size=64, shuffle=True, num_workers=0)
         for ds in client_datasets
     ]
 

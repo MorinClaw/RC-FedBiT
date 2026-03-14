@@ -3,7 +3,9 @@
 import sys, os, json, time, argparse
 sys.path.insert(0, "/root/RC-FedBiT")
 
-import torch, timm
+import torch
+torch.multiprocessing.set_sharing_strategy("file_system")
+import timm
 import numpy as np
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
@@ -47,9 +49,9 @@ def main():
     ])
     train_ds = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=True, download=False, transform=transform)
     test_ds  = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=False, download=False, transform=transform)
-    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=0)
     client_datasets = dirichlet_partition(train_ds, args.n_clients, alpha=0.5, seed=args.seed)
-    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=2) for ds in client_datasets]
+    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=0) for ds in client_datasets]
 
     config = {"device": DEVICE, "lr": args.lr, "local_lr": args.local_lr, "local_epochs": args.local_epochs,
               "gamma_high": 15.0, "gamma_low": 5.0, "total_rounds": args.rounds, "mean_snr_db": args.snr}

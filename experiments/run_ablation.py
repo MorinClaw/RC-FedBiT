@@ -10,7 +10,9 @@ A4: + AFC = Full RC-FedBiT
 import sys, os, json, time, argparse
 sys.path.insert(0, "/root/RC-FedBiT")
 
-import torch, timm
+import torch
+torch.multiprocessing.set_sharing_strategy("file_system")
+import timm
 import numpy as np
 import torch.nn as nn
 from torchvision import datasets, transforms
@@ -235,10 +237,10 @@ def main():
     ])
     train_ds = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=True, download=False, transform=transform)
     test_ds  = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=False, download=False, transform=transform)
-    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=0)
 
     client_datasets = dirichlet_partition(train_ds, args.n_clients, alpha=0.5, seed=args.seed)
-    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=2) for ds in client_datasets]
+    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=0) for ds in client_datasets]
 
     global_model = make_model(DEVICE)
     t0 = time.time()
