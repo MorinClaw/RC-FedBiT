@@ -1,0 +1,11 @@
+data/
+checkpoints/
+logs/
+results/
+__pycache__/
+*.pyc
+*.pth
+*.pt
+*.log
+*.json
+.autodl/
