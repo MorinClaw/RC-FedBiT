@@ -32,7 +32,7 @@ def run_one_alpha(alpha, args, train_ds, test_loader, device):
     else:
         client_datasets = dirichlet_partition(train_ds, args.n_clients, alpha=alpha, seed=args.seed)
         tag = f"alpha_{alpha}"
-    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=2, pin_memory=True) for ds in client_datasets]
+    client_loaders = [DataLoader(ds, batch_size=64, shuffle=True, num_workers=2) for ds in client_datasets]
 
     config = {"device": device, "lr": args.lr, "local_lr": args.local_lr, "local_epochs": args.local_epochs,
               "gamma_high": 15.0, "gamma_low": 5.0, "total_rounds": args.rounds, "mean_snr_db": 10.0}
@@ -91,7 +91,7 @@ def main():
     ])
     train_ds = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=True, download=False, transform=transform)
     test_ds  = datasets.CIFAR10("/root/RC-FedBiT/data/cifar10", train=False, download=False, transform=transform)
-    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=4)
+    test_loader = DataLoader(test_ds, batch_size=256, shuffle=False, num_workers=2)
 
     results = run_one_alpha(args.alpha, args, train_ds, test_loader, DEVICE)
 
