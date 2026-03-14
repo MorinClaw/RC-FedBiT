@@ -44,27 +44,39 @@ class FedBiTServer:
             return agg
 
         # Rank-1 / binary layers
-        binary_sum = None
+        # Key fix: compute weighted average of DECOMPRESSED gradients
+        # (B_i * outer(h1_i, h2_i)) weighted by w_i
+        # This is mathematically correct; separating B and h aggregation is wrong.
+        grad_sum = None
+        total_w = 0.0
         h1s, h2s, ws = [], [], []
 
         for data, w in updates:
             B = data["B"].float()
-            binary_sum = w * B if binary_sum is None else binary_sum + w * B
-            if data.get("mode", "") != "binary_only" and "h1" in data:
+            if data.get("mode", "") == "binary_only":
+                # No rank-1: use B only (scaled by mean abs gradient est = 1.0/sqrt(numel))
+                scale = 1.0 / (B.numel() ** 0.5 + 1e-8)
+                grad_i = B * scale
+            else:
                 h1 = data["h1"].float()
                 h2 = data["h2"].float()
                 if data.get("mode") == "rank1_int8":
                     h1 = h1 * data.get("h1_scale", torch.tensor(1.0)).float()
                     h2 = h2 * data.get("h2_scale", torch.tensor(1.0)).float()
+                # Decompressed gradient: B ⊙ (h1 ⊗ h2)
+                grad_i = B * torch.outer(h1, h2)
                 h1s.append(h1); h2s.append(h2); ws.append(w)
 
-        B_agg = torch.sign(binary_sum)
-        B_agg[B_agg == 0] = 1
+            grad_sum = w * grad_i if grad_sum is None else grad_sum + w * grad_i
+            total_w += w
 
+        agg = grad_sum / max(total_w, 1e-8)
+
+        # NIA-CVA: update prev_global_h1 for next round alignment tracking
         if h1s:
-            h1g, h2g = self._nia_cva(name, h1s, h2s, ws)
-            return B_agg * torch.outer(h1g, h2g)
-        return B_agg
+            self._nia_cva(name, h1s, h2s, ws)  # updates self.prev_global_h1
+
+        return agg
 
     def _nia_cva(self, name, h1s, h2s, ws):
         if name in self.prev_global_h1:
