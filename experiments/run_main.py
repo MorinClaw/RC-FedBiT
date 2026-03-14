@@ -263,8 +263,9 @@ def main():
         client_datasets = dirichlet_partition(train_ds, args.n_clients, alpha=args.alpha, seed=args.seed)
         print(f"Dirichlet(alpha={args.alpha}) partition: {args.n_clients} clients", flush=True)
 
+    # Create loaders lazily to avoid 200+ worker processes
     client_loaders = [
-        DataLoader(ds, batch_size=64, shuffle=True, num_workers=2, persistent_workers=True, prefetch_factor=2)
+        DataLoader(ds, batch_size=64, shuffle=True, num_workers=2)
         for ds in client_datasets
     ]
 
