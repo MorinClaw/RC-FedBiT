@@ -1,10 +1,11 @@
+import copy
 #!/usr/bin/env python3
 """
 RC-FedBiT Main Experiment Runner
 Phase 2: CIFAR-10, n_clients=100, participation=0.1, rounds=100, local_epochs=5, ViT-Tiny, alpha=0.5
 Usage: python run_main.py --method <fedavg|signsgd|qsgd|powersgd|rc_fedbit> [--alpha 0.5] [--rounds 100]
 """
-import sys, os, argparse, json, time
+import sys, os, copy, argparse, json, time
 sys.path.insert(0, "/root/RC-FedBiT")
 
 import torch
@@ -83,7 +84,7 @@ def run_rc_fedbit(args, global_model, client_loaders, test_loader, device, rng):
         payloads, wts = [], []
         round_bits = 0
         for i, k in enumerate(selected):
-            c_model = make_model(device)
+            c_model = copy.deepcopy(global_model)
             c = FedBiTClient(k, c_model, client_loaders[k], config)
             payload, wt, stats = c.train(global_weights, snr_vals[i], rnd)
             payloads.append(payload)
@@ -135,7 +136,7 @@ def run_fedavg(args, global_model, client_loaders, test_loader, device, rng):
         selected = rng.choice(args.n_clients, n_part, replace=False)
         deltas, wts = [], []
         for k in selected:
-            c_model = make_model(device)
+            c_model = copy.deepcopy(global_model)
             c = FedAvgClient(k, c_model, client_loaders[k], config)
             delta, wt, stats = c.train(global_weights)
             deltas.append(delta)
@@ -166,7 +167,7 @@ def run_signsgd(args, global_model, client_loaders, test_loader, device, rng):
         selected = rng.choice(args.n_clients, n_part, replace=False)
         payloads, wts = [], []
         for k in selected:
-            c_model = make_model(device)
+            c_model = copy.deepcopy(global_model)
             c = SignSGDClient(k, c_model, client_loaders[k], config)
             payload, wt, stats = c.train(global_weights)
             payloads.append(payload)
@@ -197,7 +198,7 @@ def run_qsgd(args, global_model, client_loaders, test_loader, device, rng):
         selected = rng.choice(args.n_clients, n_part, replace=False)
         payloads, wts = [], []
         for k in selected:
-            c_model = make_model(device)
+            c_model = copy.deepcopy(global_model)
             c = QSGDClient(k, c_model, client_loaders[k], config)
             payload, wt, stats = c.train(global_weights)
             payloads.append(payload)
@@ -227,7 +228,7 @@ def run_powersgd(args, global_model, client_loaders, test_loader, device, rng):
         selected = rng.choice(args.n_clients, n_part, replace=False)
         payloads, wts = [], []
         for k in selected:
-            c_model = make_model(device)
+            c_model = copy.deepcopy(global_model)
             c = PowerSGDClient(k, c_model, client_loaders[k], config)
             payload, wt, stats = c.train(global_weights)
             payloads.append(payload)
@@ -271,7 +272,9 @@ def main():
         for ds in client_datasets
     ]
 
-    global_model = make_model(DEVICE)
+    print("Creating global model...", flush=True)
+global_model = make_model(DEVICE)
+print("Global model ready.", flush=True)
 
     runners = {
         "fedavg": run_fedavg,
