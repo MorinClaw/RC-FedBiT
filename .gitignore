@@ -1,10 +1,38 @@
-data/
-checkpoints/
-logs/
-results/
+# Python
 __pycache__/
 *.pyc
-*.pth
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Data & Checkpoints
+data/
+checkpoints/
 *.pt
+*.pth
+*.ckpt
+
+# Results & Logs
+results/
+logs/
 *.log
-*.json
+
+# Server-specific utilities
+watcher_*.py
+daemon.py
+monitor.py
+sync_*.sh
+push_and_sync.sh
+start_experiments.sh
+launch_main.sh
+run_all_experiments.py
+run_gender_parallel.py
+debug_payloads.py
+time_client.py
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
